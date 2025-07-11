@@ -1,0 +1,55 @@
+
+<h1>Welcome to Pricely</h1>
+
+<form method="GET" action="{% url 'search_results' %}">
+   <label for="query">Search for a product:</label>
+   <input type="text" id="query" name="query" required>
+
+   <br><br>
+   <label for="min_price">Min Price:</label>
+   <input type="number" id="min_price" name="min_price" step="1" min="0">
+   <label for="max_price">Max Price:</label>
+   <input type="number" id="max_price" name="max_price" step="1" min="0">
+   <br><br>
+
+   <label for="min_rating">Minimum Rating:</label>
+   <select id="min_rating" name="min_rating">
+       <option value="">Any</option>
+       <option value="5">5</option>
+       <option value="4.5">4.5</option>
+       <option value="4">4</option>
+       <option value="3.5">3.5</option>
+       <option value="3">3</option>
+       <option value="2.5">2.5</option>
+       <option value="2">2</option>
+       <option value="1.5">1.5</option>
+       <option value="1">1</option>
+   </select>
+
+   <br><br>
+   <button type="submit">Search</button>
+</form>
+
+{% if search_history %}
+   <h3>Recent Searches</h3>
+   <ul>
+       {% for item in search_history %}
+           <li>
+               <a href="{% url 'search_results' %}?query={{ item.query|urlencode }}{% if item.min_price %}&min_price={{ item.min_price }}{% endif %}{% if item.max_price %}&max_price={{ item.max_price }}{% endif %}{% if item.min_rating %}&min_rating={{ item.min_rating }}{% endif %}">
+                   {{ item.query }}
+                   {% if item.min_price %}(Min: {{ item.min_price }}){% endif %}
+                   {% if item.max_price %}(Max: {{ item.max_price }}){% endif %}
+                   {% if item.min_rating %}(Rating ≥ {{ item.min_rating }}){% endif %}
+               </a>
+           </li>
+       {% endfor %}
+   </ul>
+
+   <form method="post" action="{% url 'clear_search_history' %}">
+       {% csrf_token %}
+       <button type="submit">Clear Search History</button>
+   </form>
+{% endif %}
+
+
+
