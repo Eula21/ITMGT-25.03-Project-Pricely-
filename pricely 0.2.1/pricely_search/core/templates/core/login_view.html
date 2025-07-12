@@ -1,0 +1,32 @@
+<!-- CORINNE JUL 11: added a login page -->
+
+<h1>Login</h1>
+
+<!-- Checks if there are any messages to display (e.g. 'Invalid Login')-->
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li{% if messages.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<!-- Login form (uses POST method) -->
+<form method="POST" action="#"> 
+    {% csrf_token %}
+    <!-- Username input --> 
+    <label for="username">Username</label>
+    <input type="text" name="username">
+    <!-- Password input -->
+    <label for="password">Password</label>
+    <input type="password" name="password">
+    <!-- "Login" button -->
+    <input type="submit" value="Login">
+</form>
+
+<!-- Link to the signup page -->
+<p> Don't have an account?
+  <a href="{% url 'signup_view' %}">Sign up</a>
+</p>
+
+

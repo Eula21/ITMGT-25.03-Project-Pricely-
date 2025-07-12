@@ -1,0 +1,94 @@
+<!-- CORINNE JUL 10: added a search form and search history in the homepage -->
+  
+  <h1>Welcome to Pricely</h1>
+
+  <!-- Search form (uses GET so filters appear in the url) -->
+  <form method="GET" action="{% url 'search_results' %}">
+    
+    <!-- Product search text input -->
+    <label for="query">Search for a product:</label>
+    <input type="text" id="query" name="query" required>
+    <br><br> 
+
+    <!-- Price filter input -->
+    <label for="min_price">Min Price:</label>
+    <input type="number" id="min_price" name="min_price" step="1" min="0">
+    <label for="max_price">Max Price:</label>
+    <input type="number" id="max_price" name="max_price" step="1" min="0">
+    <br><br>
+
+    <!-- Rating filter dropdown -->
+    <label for="min_rating">Minimum Rating:</label>
+    <select id="min_rating" name="min_rating">
+        <option value="">Any</option>
+        <option value="5">5</option>
+        <option value="4.5">4.5</option>
+        <option value="4">4</option>
+        <option value="3.5">3.5</option>
+        <option value="3">3</option>
+        <option value="2.5">2.5</option>
+        <option value="2">2</option>
+        <option value="1.5">1.5</option>
+        <option value="1">1</option>
+    </select>
+    <br><br>
+
+    <!-- Search button -->
+    <button type="submit">Search</button>
+  </form>
+
+
+<!-- Checks if there is a saved search history in session and shows it -->
+{% if search_history %}
+  <h3>Recent Searches</h3>
+  <ul>
+    {% for item in search_history %}
+      <li>
+          <!-- Create a clickable link that shows the old search with its filters -->
+          <a href="{% url 'search_results' %}?query={{ item.query|urlencode }}{% if item.min_price %}&min_price={{ item.min_price }}{% endif %}{% if item.max_price %}&max_price={{ item.max_price }}{% endif %}{% if item.min_rating %}&min_rating={{ item.min_rating }}{% endif %}">
+            {{ item.query }}
+            <!-- Show filters next to the query if they were used -->
+            {% if item.min_price %}(Min: {{ item.min_price }}){% endif %}
+            {% if item.max_price %}(Max: {{ item.max_price }}){% endif %}
+            {% if item.min_rating %}(Rating ≥ {{ item.min_rating }}){% endif %}
+          </a>
+      </li>
+    {% endfor %}
+  </ul>
+  
+  <!-- Button to clear search history (uses POST) -->
+  <form method="post" action="{% url 'clear_search_history' %}">
+    {% csrf_token %}
+    <button type="submit">Clear Search History</button>
+  </form>
+{% endif %}
+
+
+
+<!-- CORINNE JUL 11: Added a profile dropdown in the homepage -->
+
+<!-- Profile dropdown -->
+<div>
+  <button onclick="toggleDropdown()">Profile ▼</button>
+</div>
+
+<!-- Dropdown showing user info and logout option -->
+<div id="profileDropdown" style="display: none; position: absolute; border: 1px solid #ccc; background: #f9f9f9; padding: 10px;">
+  <p><strong>Username:</strong> {{ user.username }}</p>
+  <p><strong>Date Joined:</strong> {{ user.date_joined|date:"Y-m-d" }}</p>
+  
+  <!-- Logout form -->
+  <form method="post" action="{% url 'logout_view' %}">
+    {% csrf_token %}
+    <button type="submit">Log Out</button>
+  </form>
+</div>
+
+<!-- JavaScript function to toggle the visibility of the profile dropdown -->
+<script>
+  function toggleDropdown() {
+    const dropdown = document.getElementById("profileDropdown");
+    dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+  }
+</script>
+

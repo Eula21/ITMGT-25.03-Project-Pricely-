@@ -1,0 +1,30 @@
+<!-- CORINNE JUL 11: added a signup page -->
+
+<h1>Sign Up</h1>
+
+<!-- Checks if there are any messages to display (e.g. 'Username already taken')-->
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<!-- Signup form (uses POST method) -->
+<form method="POST" action="#">
+    {% csrf_token %}
+    <!-- Username input --> 
+    <label for="username">Username</label>
+    <input type="text" name="username" required>
+    <!-- Password input --> 
+    <label for="password">Password</label>
+    <input type="password" name="password" required>
+    <!-- "Sign Up" button --> 
+    <input type="submit" value="Sign Up">
+</form>
+
+<!-- Link to the login page -->
+<form action="{% url 'login_view' %}" method="get">
+    <button type="submit">← Back to Login</button>
+</form>
