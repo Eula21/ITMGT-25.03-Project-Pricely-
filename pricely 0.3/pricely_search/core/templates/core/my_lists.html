@@ -1,0 +1,74 @@
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/my_lists.css' %}"> <!--LYSS: DO NOT CHANGE ANY NAMES; this is linked to the html for my page -->
+
+<h1>My Lists</h1>
+
+<div class="page-layout">
+
+  <!-- LYSS: This is the Sidebar; it's what determines what shows up to the left of the peg I sent -->
+  <div class="sidebar">
+    <h3>Your Lists</h3>
+    <ul>
+      {% for lst in lists %}
+        <li><a href="?list={{ lst.id }}">{{ lst.name }}</a></li>
+      {% empty %}
+        <li>No lists yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- LYSS: This is the Main Content Area, essentially our product grid, like the random cards I put in our peg -->
+  <div class="main">
+    {% if selected_list %}
+      <h2>{{ selected_list.name }}</h2>
+
+      <div class="product-grid">
+
+        {% for item in items %}
+          <div class="product-card">
+
+            <!-- LYSS: This is the Platform logo in a triangle -->
+            <div class="platform-logo">
+            <img src="{% static 'logos/' %}{{ item.product.platform|lower }}.png" alt="{{ item.product.platform }} logo">
+            </div>
+            
+            <!-- LYSS: This one is the picture; i'll make final adjustments to this later-->
+            <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+
+            <!-- LYSS: This one is the Product Name, but the remove button is also here-->
+            <p class="product-name">
+              <a href="{{ item.product.link }}" target="_blank">
+                {{ item.product.name|truncatechars:30 }}
+              </a>
+              <button class="remove-button">➖</button>
+            </p>
+
+            <p class="shop-name">{{ item.product.shop }}</p>
+
+            <div class="card-bottom">
+              <span class="rating rating-{{ item.product.rating|floatformat:0 }}">
+                ★ {{ item.product.rating }}
+              </span>
+              <span class="price">₱{{ item.product.price }}</span>
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- LYSS: This one is the outlined Add More Products Card, which you guys saw in the second row of the grid of my peg -->
+        <div class="product-card add-card">
+          <a href="/search?q={{ selected_list.name }}">
+            + Add More Products
+          </a>
+        </div>
+
+      </div>
+    {% else %}
+      <p>Select a list from the left to view products.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{% endblock %}
