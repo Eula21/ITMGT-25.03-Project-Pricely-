@@ -7,7 +7,7 @@ def scrape_amazon(query):
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
 
-        page.goto("https://www.amazon.com/", timeout=60000)
+        page.goto("https://www.amazon.com/s?k=mcdonalds&crid=3SIW26F9QQQMK&sprefix=mcdo%2Caps%2C349&ref=nb_sb_ss_p13n-pd-dpltr-ranker_4_4", timeout=60000)
 
         search_input = None
         if page.query_selector("input#twotabsearchtextbox"):

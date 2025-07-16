@@ -1,0 +1,123 @@
+/* Styles for Pricely Sign Up page */
+/* LYSS: Note to self; everything is more or less the same as login_view, so if something changes in one of these files, it must change in the other */
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.bg-overlay {
+    min-height: 100vh;
+    min-width: 100vw;
+    background: url('Background.png') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.signup-logo img {
+    display: block;
+    margin: -77px auto -10px auto;
+    max-width: 420px;
+    width: 80vw;
+}
+
+.signup-card {
+    background: #fbefe1;
+    border-radius: 18px;
+    box-shadow: 0 6px 32px 0 rgba(0,0,0,0.12);
+    width: 350px;
+    max-width: 95vw;
+    padding: 34px 32px 28px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    font-family: 'Lexend', sans-serif;
+}
+
+.signup-card h2 {
+    text-align: center;
+    margin-top: -5px;
+    margin-bottom: 15px;
+    font-size: 1.35em;
+    color: #633f31;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.signup-error {
+    color: #e85050;
+    font-style: italic;
+    font-size: 1.07em;
+    text-align: center;
+    margin-bottom: 14px;
+    margin-top: -2px;
+    font-family: 'Lexend', sans-serif;
+}
+
+label {
+    margin-top: 12px;
+    margin-bottom: 15px;
+    font-size: 1em;
+    font-weight: 700;
+    color: #633f31;
+    letter-spacing: 0.02em;
+    font-family: 'Lexend', sans-serif;
+}
+
+input[type = "text"],
+input[type = "password"] {
+    width: 100%;
+    padding: 9px 12px;
+    margin-bottom: 13px;
+    border-radius: 6px;
+    border: none;
+    background: #ffffff;
+    font-size: 1em;
+    font-family: 'Lexend', sans-serif;
+    outline: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s;
+}
+
+input[type = "text"]:focus,
+input[type = "password"]:focus {
+    box-shadow: 0 0 0 2px #ffe3c2;
+}
+
+.signup-btn {
+    width: 100%;
+    background: #ffe3c2;
+    color: #633f31;
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.08em;
+    font-weight: 700;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 0;
+    margin-top: 5px;
+    margin-bottom: 13px;
+    cursor: pointer;
+    transition: filter 0.15s;
+    text-transform: uppercase;
+}
+
+.signup-btn:hover {
+    filter: brightness(0.96);
+}
+
+.signup-prompt {
+    text-align: center;
+}
+
+@media (max-width: 500px) {
+    .signup-card {
+        padding: 16px 7vw 16px 7vw;
+        width: 97vw;
+    }
+    .signup-logo img {
+        max-width: 92vw;
+    }
+}

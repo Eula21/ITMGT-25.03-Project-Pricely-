@@ -1,0 +1,40 @@
+{% load static %} <!-- LYSS: I need this for the CSS since all my stuff (assets and CSS) will be in the static folder (I also put this in the login one) -->
+
+<!-- CORINNE JUL 11: added a signup page -->
+<!-- LYSS JUL 16: modified the code and made a CSS stylesheet -->
+
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title>Pricely - Sign Up</title>
+    <link href = "https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel = "stylesheet">
+    <link rel = "stylesheet" href = "{% static 'signup_view.css' %}">
+</head>
+<body>
+<div class = "bg-overlay">
+    <div class = "signup-logo">
+        <img src = "{% static 'Pricely Logo.png' %}" alt = "Pricely Logo">
+    </div>
+    <div class = "signup-card">
+        <h2>WELCOME TO PRICELY</h2> <!-- LYSS: Hi Corinne! If you're here, I modified your code so I could use CSS as a separate file, but everything's here -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class = "signup-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <form method = "POST" action = "#">
+            {% csrf_token %}
+            <label for = "username">USERNAME</label>
+            <input type = "text" name = "username" id = "username" required>
+            <label for = "password">PASSWORD</label>
+            <input type = "password" name = "password" id = "password" required>
+            <button type = "submit" class = "signup-btn">SIGN UP</button>
+        </form>
+        <p class = "signup-prompt"> Have an account?
+            <a href = "{% url 'login_view' %}">Log in</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
