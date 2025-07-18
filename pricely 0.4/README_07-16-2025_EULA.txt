@@ -74,7 +74,7 @@ Notes to self:
 ! Don't use docker muna. Made me cry, but will integrate better after frontend.
 Steps on how to set up your environment:
     hiii, bare with me, this can be a lot
-        1.)  ## download venv using requirements.txt
+        1.) pip install -r requirements.txt ## download venv using requirements.txt
         2.) docker build -t pricely .
         3.) docker-compose up --build ## runs both django and celery ## reco this
                 docker run -p 8000:8000 pricely ## run the website through docker but without celery|redis

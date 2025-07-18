@@ -1,0 +1,163 @@
+{% load static %}
+<!-- CORINNE JUL 10: added a search form and search history in the homepage -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pricely</title>
+  <!-- LYSS: Lexend Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
+  <!-- LYSS: Main stylesheet for all styling -->
+  <link rel="stylesheet" href="{% static 'index.css' %}">
+</head>
+
+<body>
+  <!-- LYSS: BACKGROUND IMAGE as a CSS background via index.css -->
+  <div class="page-wrapper">
+    <!-- Top Navigation -->
+    <div class="navbar">
+      <div class="nav-left">
+        <a href="{% url 'my_lists' %}" class="my-lists-link"> <!-- LYSS: linked my lists page -->
+          <img src="{% static 'list.png' %}" alt="My Lists" class="icon list-icon">
+          <span class="nav-label">My Lists</span>
+        </a>
+      </div>
+      <!-- LYSS: deleted username part -->
+    </div>
+
+    <!-- LYSS: Logo Centered -->
+    <div class="logo-section">
+      <img src="{% static 'Pricely Logo.png' %}" alt="Pricely Logo" class="pricely-logo">
+    </div>
+
+    <!-- LYSS: Search Section -->
+    <div class="search-section">
+      <!-- EUL JULY 16 | search form (handled by JavaScript instead of regular GET submission) -->
+      <form id="search-form" action="{% url 'search_results' %}" method="get" autocomplete="off">
+        <div class="search-bar-container">
+          <img src="{% static 'magnifying glass.png' %}" alt="Search" class="icon search-icon">
+          <input type="text" id="query" name="query" required placeholder="Search for a product">
+        </div>
+        <div class="filters-row">
+          <div class="input-group">
+            <label for="min_price">Min Price</label>
+            <input type="number" id="min_price" name="min_price" step="1" min="0" placeholder="Min">
+          </div>
+          <div class="input-group">
+            <label for="max_price">Max Price</label>
+            <input type="number" id="max_price" name="max_price" step="1" min="0" placeholder="Max">
+          </div>
+          <div class="input-group">
+            <label for="min_rating">Min Rating</label>
+            <select id="min_rating" name="min_rating">
+              <option value="">Any</option>
+              <option value="5">5</option>
+              <option value="4.5">4.5</option>
+              <option value="4">4</option>
+              <option value="3.5">3.5</option>
+              <option value="3">3</option>
+              <option value="2.5">2.5</option>
+              <option value="2">2</option>
+              <option value="1.5">1.5</option>
+              <option value="1">1</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="search-btn">Search</button>
+      </form>
+      <div id="status-message" class="status-message"></div>
+    </div>
+
+    <!-- LYSS: Search History Section -->
+    {% if search_history %}
+    <div class="history-section">
+      <h3>Recent Searches</h3>
+      <ul class="history-list">
+        {% for item in search_history %}
+          <li>
+            <a href="{% url 'search_results' %}?query={{ item.query|urlencode }}{% if item.min_price %}&min_price={{ item.min_price }}{% endif %}{% if item.max_price %}&max_price={{ item.max_price }}{% endif %}{% if item.min_rating %}&min_rating={{ item.min_rating }}{% endif %}">
+              <strong>{{ item.query }}</strong>
+              {% if item.min_price %}<span class="history-min">(Min: {{ item.min_price }})</span>{% endif %}
+              {% if item.max_price %}<span class="history-max">(Max: {{ item.max_price }})</span>{% endif %}
+              {% if item.min_rating %}<span class="history-rating">(Rating ≥ {{ item.min_rating }})</span>{% endif %}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'clear_search_history' %}">
+        {% csrf_token %}
+        <button type="submit" class="clear-history-btn">Clear Search History</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- LYSS: Profile Dropdown -->
+    <div class="profile-dropdown-container">
+      <button onclick="toggleDropdown()" class="profile-btn">Profile ▼</button>
+      <div id="profileDropdown" class="profile-dropdown">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Date Joined:</strong> {{ user.date_joined|date:"Y-m-d" }}</p>
+        <form method="post" action="{% url 'logout_view' %}">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn">Log Out</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- LYSS: JavaScript (preserved exactly) -->
+  <script>
+    function toggleDropdown() {
+      const dropdown = document.getElementById("profileDropdown");
+      dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+    }
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("search-form");
+      const statusMessage = document.getElementById("status-message");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const query = document.getElementById("query").value;
+        const min_price = document.getElementById("min_price").value;
+        const max_price = document.getElementById("max_price").value;
+        const min_rating = document.getElementById("min_rating").value;
+
+        if (!query) {
+          alert("Please enter a product to search.");
+          return;
+        }
+
+        statusMessage.innerHTML = "Searching across platforms... ⏳";
+
+        fetch(`/start-search/?query=${encodeURIComponent(query)}`)
+          .then(res => res.json())
+          .then(data => {
+            const taskId = data.task_id;
+
+            const interval = setInterval(() => {
+              fetch(`/check-task-status/?task_id=${taskId}`)
+                .then(res => res.json())
+                .then(result => {
+                  if (result.status === "done") {
+                    clearInterval(interval);
+                    statusMessage.innerHTML = "Search complete! Redirecting... 🚀";
+
+                    let url = `/search-results/?query=${encodeURIComponent(query)}`;
+                    if (min_price) url += `&min_price=${min_price}`;
+                    if (max_price) url += `&max_price=${max_price}`;
+                    if (min_rating) url += `&min_rating=${min_rating}`;
+                    window.location.href = url;
+                  }
+                });
+            }, 2000);
+          });
+      });
+    });
+  </script>
+</body>
+</html>
+

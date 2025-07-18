@@ -1,0 +1,41 @@
+{% load static %} <!-- LYSS: I need this for the CSS since all my stuff (assets and CSS) will be in the static folder -->
+
+<!-- CORINNE JUL 11: added a login page -->
+<!-- LYSS JUL 16: modified the code and made a CSS stylesheet -->
+
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title>Pricely - Log In</title>
+    <link href = "https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel = "stylesheet">
+    <link rel = "stylesheet" href = "{% static 'login_view.css' %}">
+</head>
+<body>
+<div class = "bg-overlay">
+    <div class = "login-logo">
+        <img src = "{% static 'Pricely Logo.png' %}" alt = "Pricely Logo">
+    </div>
+    <div class = "login-card">
+        <h2>LOG IN TO CONTINUE</h2>
+        {% if messages %} <!-- LYSS: I changed a bit of the code since we're only displaying a diff message if there's an error -->
+            {% for message in messages %}
+                <div class = "login-error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <!-- LYSS: I transferred the form here -->
+        <form method = "POST" action = "#"> 
+            {% csrf_token %}
+            <label for = "username">USERNAME</label>
+            <input type = "text" name = "username" id = "username">
+            <label for = "password">PASSWORD</label>
+            <input type = "password" name = "password" id = "password">
+            <button type = "submit" class = "login-btn">LOG IN</button>
+        </form>
+        <p class = "signup-prompt"> Don't have an account? <!-- LYSS: This one's the link to the signup page, maintaining the original code by Corinne -->
+            <a href = "{% url 'signup_view' %}">Sign up</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

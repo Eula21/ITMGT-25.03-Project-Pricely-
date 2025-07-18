@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery:
+    build: .
+    command: celery -A pricely_search worker --loglevel=info --concurrency=5
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"  # Keep this if you're accessing Redis from outside Docker
+    restart: unless-stopped

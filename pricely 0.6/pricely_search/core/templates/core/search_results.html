@@ -1,0 +1,464 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'search_results.css' %}">
+</head>
+<body>
+  <header class="pricely-header">
+    <img src="{% static 'Pricely Logo.png' %}" alt="Pricely Logo" class="logo">
+    <a href="{% url 'index' %}" class="home-link">
+      <img src="{% static 'home.png' %}" alt="Home" class="home-icon">
+    </a>
+    <form class="searchbar-form" action="{% url 'search_results' %}" method="get" style="flex: 1;">
+      <input class="pricely-searchbar" type="text" name="query" id="query" placeholder="Search..." value="{{ request.GET.query|default:'' }}" autocomplete="off">
+    </form>
+  </header>
+
+  <main>
+    <div class="search-results-row">
+      <h2 class="search-results-title">Search Results</h2>
+      <form id="filter-form" class="filter-row">
+        <input type="hidden" name="query" id="filter-query">
+        <input type="hidden" name="category" id="filter-category">
+        <div>
+          <label for="min_price">MIN PRICE</label>
+          <input type="number" name="min_price" id="min_price" class="filter-input" min="0" step="any" style="width:90px;">
+        </div>
+        <div>
+          <label for="max_price">MAX PRICE</label>
+          <input type="number" name="max_price" id="max_price" class="filter-input" min="0" step="any" style="width:90px;">
+        </div>
+        <div>
+          <label for="min_rating">MIN RATING</label>
+          <input type="number" name="min_rating" id="min_rating" class="filter-input" min="0" max="5" step="0.1" style="width:90px;">
+        </div>
+        <button type="submit">Apply</button>
+      </form>
+    </div>
+
+    <div id="status">Loading...</div>
+    <div class="results-container-wrapper">
+      <div id="results-container"></div>
+    </div>
+    <div id="pagination"></div>
+
+    <div id="list-selector-popover" class="popover" style="display: none;">
+      <div class="popover-content">
+        <h3>Select List</h3>
+        <select id="user-lists-dropdown"></select>
+        <div style="margin-top: 8px;">
+          <button id="confirm-add-btn">Add</button>
+          <button onclick="closeListPopover()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const PRODUCTS_PER_PAGE = 48;
+    let globalProducts = [];
+    let currentPage = 1;
+    let selectedProductToAdd = null;
+
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("query");
+    const category = params.get("category") || "all categories";
+    document.querySelector('.pricely-searchbar').value = query || "";
+
+    function getParam(name) {
+      return new URL(window.location.href).searchParams.get(name) || "";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("min_price").value = getParam("min_price");
+      document.getElementById("max_price").value = getParam("max_price");
+      document.getElementById("min_rating").value = getParam("min_rating");
+      document.getElementById("filter-query").value = getParam("query");
+      document.getElementById("filter-category").value = getParam("category");
+    });
+
+    document.getElementById("filter-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      let params = new URLSearchParams();
+      let queryVal = document.getElementById("query").value;
+      if (queryVal) params.set("query", queryVal);
+      ["min_price", "max_price", "min_rating"].forEach(id => {
+        let val = document.getElementById(id).value;
+        if (val) params.set(id, val);
+      });
+      const category = getParam("category");
+      if (category) params.set("category", category);
+      window.location = window.location.pathname + "?" + params.toString();
+    });
+
+    // --- ALL FUNCTIONS DEFINED OUTSIDE THE QUERY CHECK ---
+
+    function renderResultsPage(page) {
+      const container = document.getElementById("results-container");
+      const status = document.getElementById("status");
+      container.innerHTML = "";
+      status.textContent = "";
+
+      if (!globalProducts || globalProducts.length === 0) {
+        status.textContent = `No matching results for "${query}".`;
+        document.getElementById("pagination").innerHTML = "";
+        return;
+      }
+
+      const startIdx = (page - 1) * PRODUCTS_PER_PAGE;
+      const endIdx = Math.min(startIdx + PRODUCTS_PER_PAGE, globalProducts.length);
+      const productsToShow = globalProducts.slice(startIdx, endIdx);
+      status.textContent = `Showing ${startIdx + 1}-${endIdx} of ${globalProducts.length} products`;
+
+      const grid = document.createElement("div");
+      grid.className = "results-grid";
+
+      productsToShow.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "result-card";
+
+        const platform = (p.platform || "").toLowerCase();
+        const logos = {
+          "amaz": "Amazon.png", "ebay": "Ebay.png", "land": "Landers.png",
+          "laz": "Lazada.png", "sm": "SMStore.jpg", "uniqlo": "UNIQLO.png", "h&m": "H&M.jpg"
+        };
+        for (let key in logos) {
+          if (platform.includes(key)) {
+            const logo = document.createElement("img");
+            logo.src = "/static/" + logos[key];
+            logo.alt = p.platform;
+            logo.className = "platform-logo-float";
+            card.appendChild(logo);
+            break;
+          }
+        }
+
+        const img = document.createElement("img");
+        img.className = "product-image";
+        img.src = p.image_url || "https://dummyimage.com/300x300/eee/333&text=No+Image";
+        img.alt = p.product_title || "Product Image";
+        card.appendChild(img);
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "name-row";
+
+        const prodName = document.createElement("div");
+        prodName.className = "product-name";
+        prodName.title = p.product_title || "";
+        prodName.textContent = truncate(p.product_title || "");
+        nameRow.appendChild(prodName);
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "add-btn";
+        addBtn.textContent = "+";
+        addBtn.onclick = (e) => showListDropdown(p, e.currentTarget);
+        nameRow.appendChild(addBtn);
+
+        card.appendChild(nameRow);
+
+        const link = document.createElement("a");
+        link.href = p.product_url || "#";
+        link.target = "_blank";
+        link.className = "view-live-link";
+        link.textContent = "View live page";
+        card.appendChild(link);
+
+        const bottomRow = document.createElement("div");
+        bottomRow.className = "bottom-row";
+
+        const star = document.createElement("span");
+        star.className = "star-icon " + getStarColorClass(p.rating);
+        star.textContent = "★";
+        bottomRow.appendChild(star);
+
+        const rating = document.createElement("span");
+        rating.className = "rating-num";
+        rating.textContent = formatRating(p.rating);
+        bottomRow.appendChild(rating);
+
+        const price = document.createElement("span");
+        price.className = "product-price";
+        price.textContent = formatPrice(p.price);
+        bottomRow.appendChild(price);
+
+        card.appendChild(bottomRow);
+        grid.appendChild(card);
+      });
+
+      container.appendChild(grid);
+      renderPagination(page);
+    }
+
+    function renderPagination(current) {
+      let div = document.getElementById("pagination");
+      div.innerHTML = "";
+      const total = Math.ceil(globalProducts.length / PRODUCTS_PER_PAGE);
+      if (total <= 1) return;
+      for (let i = 1; i <= total; i++) {
+        const btn = document.createElement("button");
+        btn.className = "page-btn";
+        btn.textContent = i;
+        if (i === current) btn.classList.add("active");
+        btn.onclick = () => {
+          currentPage = i;
+          renderResultsPage(i);
+        };
+        div.appendChild(btn);
+      }
+    }
+
+    function truncate(name, max = 40) {
+      return name.length > max ? name.slice(0, max - 3) + "..." : name;
+    }
+
+    function formatPrice(price) {
+      if (typeof price !== "string") return price;
+      if (price.includes("$")) {
+        let val = parseFloat(price.replace(/[^\d.]/g, ""));
+        return isNaN(val) ? price : `₱${Math.round(val * 57).toLocaleString()}`;
+      }
+      if (price.includes("₱")) return price.trim();
+      return `₱${price}`;
+    }
+
+    function formatRating(r) {
+      const val = parseFloat(r);
+      return isNaN(val) ? "N/A" : val.toFixed(1);
+    }
+
+    function getStarColorClass(r) {
+      const n = parseFloat(r);
+      if (isNaN(n)) return "star-na";
+      if (n >= 4) return "star-yellow";
+      if (n >= 3) return "star-yelloworange";
+      if (n >= 2) return "star-orange";
+      if (n >= 1) return "star-redorange";
+      return "star-red";
+    }
+
+    function showListDropdown(product, button) {
+      selectedProductToAdd = product;
+
+      // Close existing popover if open
+      closeListPopover();
+
+      fetch("/get-user-lists/")
+        .then(res => res.json())
+        .then(data => {
+          const dropdown = document.getElementById("user-lists-dropdown");
+          dropdown.innerHTML = "";
+
+          if (!data.lists || data.lists.length === 0) {
+            let opt = document.createElement("option");
+            opt.textContent = "No lists available";
+            opt.disabled = true;
+            dropdown.appendChild(opt);
+          } else {
+            data.lists.forEach(list => {
+              let opt = document.createElement("option");
+              opt.value = list.id;
+              opt.textContent = list.name;
+              dropdown.appendChild(opt);
+            });
+          }
+
+          // Position popover below the button
+          const popover = document.getElementById("list-selector-popover");
+          const rect = button.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+          popover.style.position = "absolute";
+          popover.style.top = `${rect.bottom + scrollTop + 5}px`;
+          popover.style.left = `${rect.left + scrollLeft}px`;
+          popover.style.display = "block";
+        })
+        .catch(() => {
+          alert("Failed to load your lists. Please try again.");
+        });
+    }
+
+    function closeListPopover() {
+      document.getElementById("list-selector-popover").style.display = "none";
+    }
+
+    document.getElementById("confirm-add-btn").addEventListener("click", () => {
+      const listId = document.getElementById("user-lists-dropdown").value;
+      if (!listId) {
+        alert("Please select a list first.");
+        return;
+      }
+      fetch("/add-to-list/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+          list_id: listId,
+          product_title: selectedProductToAdd.product_title,
+          price: selectedProductToAdd.price,
+          rating: selectedProductToAdd.rating,
+          product_url: selectedProductToAdd.product_url,
+          image_url: selectedProductToAdd.image_url,
+          platform: selectedProductToAdd.platform,
+          shop_name: selectedProductToAdd.shop_name,
+        }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        showToast(data.message || "Product added!");
+        closeListPopover();  // <-- Use the correct close function here
+      })
+      .catch(() => {
+        showToast("Failed to add product.");
+      });
+    });
+
+    function getCSRFToken() {
+      return document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1];
+    }
+
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, duration);
+    }
+
+    document.addEventListener("click", function(event) {
+      const popover = document.getElementById("list-selector-popover");
+      if (
+        popover.style.display === "block" &&
+        !popover.contains(event.target) &&
+        !event.target.classList.contains("add-btn")
+      ) {
+        closeListPopover();
+      }
+    });
+        
+    // --- ONLY FETCH DATA AND RENDER IF QUERY EXISTS ---
+
+    if (query) {
+      fetch(`/start-search/?query=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`)
+        .then(res => res.json())
+        .then(data => checkStatus(data.task_id));
+
+      function checkStatus(taskId) {
+        fetch(`/check-task-status/?task_id=${taskId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "done") {
+              globalProducts = data.result || [];
+              renderResultsPage(1);
+            } else if (data.status === "error") {
+              document.getElementById("status").textContent = "Error: " + data.message;
+            } else {
+              document.getElementById("status").textContent = "Loading...";
+              setTimeout(() => checkStatus(taskId), 2000);
+            }
+          });
+      }
+    } else {
+      document.getElementById("status").textContent = "No search query provided.";
+    }
+  </script>
+
+  <style>
+    .toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 12px 18px;
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+    .toast.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .popover {
+      position: absolute;
+      z-index: 1000;
+      background: #fffbe6; /* Pastel yellow */
+      border: 1px solid #f1e6b2;
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      font-family: 'Lexend', sans-serif;
+      width: 240px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .popover-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .popover-content h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #3b3b3b;
+    }
+
+    .popover-content select {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #fff;
+      font-size: 14px;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    .popover-content button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    #confirm-add-btn {
+      background-color: #facc15; /* Soft yellow button */
+      color: #3b3b3b;
+    }
+
+    #confirm-add-btn:hover {
+      background-color: #eab308;
+    }
+
+    .popover-content button:last-of-type {
+      background-color: #e5e7eb; /* Soft neutral for cancel */
+      color: #374151;
+    }
+
+    .popover-content button:last-of-type:hover {
+      background-color: #d1d5db;
+    }
+  </style>
+</body>
+</html>

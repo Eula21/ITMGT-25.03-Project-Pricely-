@@ -1,0 +1,142 @@
+/* LYSS: Hallo Corinne and Eula! Idk why you're here, but pls msg me before u touch anything thanksss HAHAHHAHAHAHAA */
+/* LYSS: Also don't mind the change notes; it was just for reference with the first working CSS as a basis for noting down  what changed */
+
+/* Remove the white margin */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Background with overlay */
+.bg-overlay {
+    min-height: 100vh;
+    min-width: 100vw;
+    background: url('Background.png') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Pricely logo styling */
+.login-logo img {
+    display: block;
+    margin: -77px auto -10px auto; /*7.16 22:13 | Changed bottom margin (32px to -10px) + top margin from (0px to -77px)*/
+    max-width: 420px; /*7.16 22:12 | Changed width (320px to 420px)*/
+    width: 80vw;
+}
+
+/* Login card */
+.login-card {
+    background: #fbefe1;
+    border-radius: 18px;
+    box-shadow: 0 6px 32px 0 rgba(0,0,0,0.12);
+    width: 350px;
+    max-width: 95vw;
+    padding: 34px 32px 28px 32px; /*7.16 22:04 | Changed upper margin (34px to 15px)*/
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    font-family: 'Lexend', sans-serif;
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-top: -5px;
+    margin-bottom: 15px; /*7.16 22:07 | Changed margin (6px to 15px)*/
+    font-size: 1.35em;
+    color: #633f31;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.login-error {
+    color: #e85050;
+    font-style: italic;
+    font-size: 1.07em;
+    text-align: center;
+    margin-bottom: 14px;
+    margin-top: -2px;
+    font-family: 'Lexend', sans-serif;
+}
+
+label {
+    margin-top: 12px;
+    margin-bottom: 15px; /*7.16 22:07 | Changed margin (4px to 10px)*/
+    font-size: 1em;
+    font-weight: 700;
+    color: #633f31;
+    letter-spacing: 0.02em;
+    font-family: 'Lexend', sans-serif;
+}
+
+input[type = "text"],
+input[type = "password"] {
+    width: 100%;
+    padding: 9px 12px;
+    margin-bottom: 13px;
+    border-radius: 6px;
+    border: none;
+    background: #ffffff;
+    font-size: 1em;
+    font-family: 'Lexend', sans-serif;
+    outline: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s;
+}
+
+input[type = "text"]:focus,
+input[type = "password"]:focus {
+    box-shadow: 0 0 0 2px #ffe3c2;
+}
+
+.login-btn {
+    width: 100%;
+    background: #ffe3c2;
+    color: #633f31;
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.08em;
+    font-weight: 700;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 0;
+    margin-top: 5px;
+    margin-bottom: 13px;
+    cursor: pointer;
+    transition: filter 0.15s;
+    text-transform: uppercase;
+}
+
+.login-btn:hover {
+    filter: brightness(0.96);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #cbb8a1;
+    margin: 18px 0 9px 0;
+}
+
+.signup-text {
+    text-align: center;
+    color: #7c6a5e;
+    font-size: 1em;
+    font-style: italic;
+    margin-bottom: 2px;
+}
+
+.signup-prompt {
+    text-align: center;
+}
+
+/* Responsive tweaks */
+@media (max-width: 500px) {
+    .login-card {
+        padding: 16px 7vw 16px 7vw;
+        width: 97vw;
+    }
+    .login-logo img {
+        max-width: 92vw;
+    }
+}

@@ -1,0 +1,202 @@
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'my_lists.css' %}">
+
+<header class="pricely-header">
+  <a href="{% url 'index' %}">
+    <img src="{% static 'Pricely Logo.png' %}" alt="Pricely Logo" class="logo">
+  </a>
+  <a href="{% url 'index' %}" class="home-link">
+    <img src="{% static 'home.png' %}" alt="Home" class="home-icon">
+  </a>
+  <form class="searchbar-form" action="{% url 'search_results' %}" method="get">
+    <input
+      class="pricely-searchbar"
+      type="text"
+      name="query"
+      id="query"
+      placeholder="Search Products"
+      value="{{ request.GET.query|default:'' }}"
+      autocomplete="off"
+    >
+  </form>
+</header>
+
+<h1 class="my-lists-heading">My Lists</h1>
+
+<div class="sort-row">
+  <span class="sort-label">Sort by:</span>
+  <button class="sort-btn active">A - Z</button>
+  <button class="sort-btn">Recent</button>
+  {% if selected_list %}
+    <h2 class="list-title">{{ selected_list.name }}</h2>
+  {% endif %}
+</div>
+
+<div class="page-layout">
+  <div class="sidebar">
+    <ul>
+      {% for lst in lists %}
+        <li><a href="?list={{ lst.id }}">{{ lst.name }}</a></li>
+      {% empty %}
+        <li>No lists yet!</li>
+      {% endfor %}
+      <button class="create-list-btn">+ Create New List</button>
+    </ul>
+  </div>
+
+  <div class="main">
+    {% if selected_list %}
+      <div class="product-grid">
+        {% for item in items %}
+          <div class="product-card">
+            <div class="platform-logo">
+              <img src="{% static '' %}{{ item.platform|lower }}.png" alt="{{ item.platform }} logo">
+            </div>
+
+            <img src="{{ item.image_url }}" alt="{{ item.product_title }}">
+
+            <p class="product-name">
+              <a href="{{ item.product_url }}" target="_blank">
+                {{ item.product_title|truncatechars:30 }}
+              </a>
+              <button class="remove-button" onclick="removeItem('{{ item.id }}')">➖</button>
+            </p>
+
+            <p class="shop-name">{{ item.shop_name }}</p>
+
+            <div class="card-bottom">
+              <span class="rating">★ {{ item.rating|floatformat:1 }}</span>
+              </span>
+              <span class="product-price">{{ item.display_price }}</span>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="product-card add-card">
+          <a href="/search?q={{ selected_list.name }}">
+            + Add More Products
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <p class="instructions">Select a list from the left to view products.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div id="create-list-overlay" class="create-list-overlay" style="display:none;">
+  <div class="create-list-modal" tabindex="-1">
+    <h3 class="modal-title">Create New List</h3>
+    <label for="new-list-name" class="modal-label">List Name:</label>
+    <input type="text" id="new-list-name" class="modal-input" maxlength="30" autocomplete="off" />
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-btn-row">
+      <button class="modal-cancel" id="modal-cancel">Cancel</button>
+      <button class="modal-create" id="modal-create" disabled>Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getCSRFToken() {
+    let name = 'csrftoken';
+    let cookies = document.cookie.split(';');
+    for (let c of cookies) {
+      let [k, v] = c.trim().split('=');
+      if (k === name) return v;
+    }
+    return '';
+  }
+
+  function removeItem(itemId) {
+    fetch(`/remove_item/${itemId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCSRFToken()
+      }
+    }).then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert("Failed to remove item.");
+      }
+    });
+  }
+
+  const openBtn = document.querySelector('.create-list-btn');
+  const overlay = document.getElementById('create-list-overlay');
+  const modal = document.querySelector('.create-list-modal');
+  const input = document.getElementById('new-list-name');
+  const cancelBtn = document.getElementById('modal-cancel');
+  const createBtn = document.getElementById('modal-create');
+  const errorDiv = document.getElementById('modal-error');
+
+  openBtn.addEventListener('click', () => {
+    overlay.style.display = 'flex';
+    input.value = '';
+    createBtn.disabled = true;
+    errorDiv.textContent = '';
+    setTimeout(() => { input.focus(); }, 100);
+  });
+
+  function closeModal() {
+    overlay.style.display = 'none';
+  }
+
+  cancelBtn.addEventListener('click', closeModal);
+
+  overlay.addEventListener('mousedown', function(event) {
+    if (event.target === overlay) {
+      closeModal();
+    }
+  });
+
+  input.addEventListener('input', function() {
+    createBtn.disabled = input.value.trim().length === 0;
+    errorDiv.textContent = '';
+  });
+
+  createBtn.addEventListener('click', function(event) {
+    event.preventDefault();
+    const listName = input.value.trim();
+    if (!listName) return;
+
+    fetch('/create_list/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      body: JSON.stringify({ name: listName })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const ul = document.querySelector('.sidebar ul');
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="?list=${data.list.id}">${data.list.name}</a>`;
+
+        if (ul.querySelector('.create-list-btn')) {
+          ul.insertBefore(li, ul.querySelector('.create-list-btn'));
+        } else {
+          ul.appendChild(li);
+        }
+        closeModal();
+      } else {
+        errorDiv.textContent = data.error;
+      }
+    })
+    .catch(() => {
+      errorDiv.textContent = 'Could not create list. Try again.';
+    });
+  });
+
+  input.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && !createBtn.disabled) {
+      createBtn.click();
+    }
+  });
+</script>
+{% endblock %}

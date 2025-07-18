@@ -1,0 +1,68 @@
+<!-- CORINNE JUL 10: Added a search results page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search Results</title>
+</head>
+<body>
+  <h2>Search Results</h2>
+  <div id="status">Loading...</div>
+  <div id="results-container"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get("query");
+
+    if (query) {
+      fetch(`/start-search/?query=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          const taskId = data.task_id;
+          checkStatus(taskId);
+        });
+
+      function checkStatus(taskId) {
+        fetch(`/check-task-status/?task_id=${taskId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "done") {
+              renderResults(data.result);
+            } else if (data.status === "error") {
+              document.getElementById("status").textContent = "Error: " + data.message;
+            } else {
+              document.getElementById("status").textContent = "Loading...";
+              setTimeout(() => checkStatus(taskId), 2000);  // poll every 2 sec
+            }
+          });
+      }
+
+      function renderResults(products) {
+        const container = document.getElementById("results-container");
+        const status = document.getElementById("status");
+        status.textContent = `Found ${products.length} products`;
+
+        if (products.length === 0) {
+          container.innerHTML = "<p>No products found.</p>";
+          return;
+        }
+
+        const list = document.createElement("ul");
+        products.forEach(p => {
+          const item = document.createElement("li");
+          item.innerHTML = `
+            <strong>${p.product_title}</strong><br>
+            Price: ${p.price || "N/A"}<br>
+            Rating: ${p.rating || "N/A"}<br>
+            <a href="${p.product_url}" target="_blank">View</a>
+          `;
+          list.appendChild(item);
+        });
+        container.appendChild(list);
+      }
+    } else {
+      document.getElementById("status").textContent = "No search query provided.";
+    }
+  </script>
+</body>
+</html>
